@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Log In
+{% endblock %}
+
+{% block main %}
+    <form action="/login" method="post">
+        <div class="form-group">
+            <input id="username" autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text">
+        </div>
+        <div class="form-group">
+            <input id="password" class="form-control" name="password" placeholder="Password" type="password">
+        </div>
+        <button id="submit" class="btn btn-primary" type="submit">Log In</button>
+        {% if invalid_login %}
+        <small id="errmsg" class="form-text">Username not found or the password is incorrect, please try again!</small>
+        {% endif %}
+    </form>
+    <script>
+        let unameBox = document.getElementById("username");
+        let passBox = document.getElementById("password");
+        let btn = document.getElementById("submit");
+        let unameEmpty = true;
+        let passEmpty = true;
+        btn.disabled = true;
+        
+        function enableBtn()
+        {
+            if (unameBox.value != "" && passBox.value != "")
+            {
+                btn.disabled = false;
+            }
+            else
+            {
+                btn.disabled = true;
+            }
+        }
+        window.setInterval(enableBtn, 1);
+    </script>
+{% endblock %}

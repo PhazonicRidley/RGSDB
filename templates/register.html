@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    register
+{% endblock %}
+
+{% block main %}
+    <p> {{xss_protection}} </p>
+
+    <form action="/register" method="post">
+        <div class="form-group">
+            <input id="username" autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text">
+        </div>
+        <div class="form-group">
+            <input id="password" class="form-control" name="password" placeholder="Password" type="password">
+        </div>
+        <div id="confirm_div" class="form-group">
+            <input id="password_confirm" class="form-control" name="password_confirm" placeholder="Confirm Passsword" type="password">
+            <small id="errmsg" class="form-text"></small>
+        </div>
+        {% if error %}
+        <script>
+            document.getElementById("errmsg").innerHTML = `{{ message }}`;
+        </script>
+        {% endif %}
+        <button id="submit" class="btn btn-primary" type="submit">Register</button>
+    </form>
+    <script src=" {{ url_for('static', filename='js/checkregister.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Song List
+{% endblock %}
+
+{% block main %}
+{% if song_data %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Name</th>
+                <th scope="col">Artist</th>
+                <th scope="col">Creation Date</th>
+                <th scope="col">Upload Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for song in song_data %}
+            <tr>
+                <td scope="row">{{ song['id'] }}</td>
+                <td>{{ song['name'] }}</td>
+                <td>{{ song['artist'] }}</td>
+                <td>{{ song['creation'] }}</td>
+                <td>{{ song['uploaded'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <h4>No songs found!</h4>
+{% endif %}
+{% endblock %}
