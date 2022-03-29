@@ -3,6 +3,8 @@ from flask import redirect, render_template, request, session
 from functools import wraps
 import sqlite3
 
+ALLOWED_EXTENSIONS = {'zip', 'osz', 'osk', 'osr'}
+
 def login_required(f):
     """
     Decorate routes to require login.
@@ -24,3 +26,7 @@ def dict_factory(cursor: sqlite3.Cursor, row: tuple) -> dict:
     for idx, col in enumerate(cursor.description):
         d[col[0]] = row[idx]
     return d
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS

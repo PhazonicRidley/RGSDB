@@ -5,7 +5,7 @@
 
 {% block main %}
 <h1>Add a song to the database</h1>
-<form action="/songs/add" method="post">
+<form action="/songs/add" enctype=multipart/form-data method="post">
     <div class="form-group">
         <input id="name" autofocus class="form-control" name="name" placeholder="Song Name" type="text">
     </div>

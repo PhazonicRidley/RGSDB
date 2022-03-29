@@ -7,8 +7,9 @@ from tempfile import mkdtemp
 import sys
 import os
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
+from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
-from helpers import login_required, dict_factory
+from helpers import login_required, dict_factory, allowed_file
 from datetime import datetime
 
 
@@ -126,8 +127,8 @@ def logout() -> Response:
 @app.route("/songs")
 @login_required
 def songs():
-    """Osu song list"""
-    song_dict = db.execute("SELECT * FROM songs")
+    """Clone Hero song list"""
+    song_dict = db.execute("SELECT * FROM ch_songs")
     return render_template("songs.html", song_data=song_dict)
 
 @app.route("/songs/add", methods=['POST', 'GET'])
@@ -139,20 +140,20 @@ def add_song():
         artist = request.form.get("artist")
         creation = request.form.get("creation")
         uploaded = str(datetime.now())
-        file = request.form.get("uploadedfile")
-        if file:
-            print("File uploaded")
+        file = request.files["uploadedfile"]
         # file nonsense here
-        db.execute(
-            """
-            INSERT INTO songs (user_id, name, artist, creation, uploaded)
-            VALUES (:uid, :name, :artist, :creation, :uploaded)
-            """, {'uid':session['user_id'],'name':name, 'artist':artist, 'creation':creation, 'uploaded':uploaded})
-        db.commit()
+        if file and allowed_file(file.filename):
+            filename = secure_filename(artist + " - " + name)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename + ".zip"))
+            print("File uploaded")
+            db.execute(
+                """
+                INSERT INTO ch_songs (user_id, song_name, artist, song_creation, uploaded)
+                VALUES (:uid, :name, :artist, :creation, :uploaded)
+                """, {'uid':session['user_id'],'name':name, 'artist':artist, 'creation':creation, 'uploaded':uploaded})
+            db.commit()
         return redirect("/songs")
     
     else:
         return render_template("add.html")
-
-
 
