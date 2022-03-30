@@ -4,17 +4,63 @@
 {% endblock %}
 
 {% block main %}
+
+<script>
+$(document).ready(function(){
+    $("select").change(function(){
+        $(this).find("option:selected").each(function(){
+            var optionValue = $(this).attr("value");
+            if(optionValue){
+                $(".select").not("." + optionValue).hide();
+                $("." + optionValue).show();
+            } else{
+                $(".select").hide();
+            }
+        });
+    }).change();
+});
+</script>
+
 <h1>Add a song to the database</h1>
 <form action="/songs/add" enctype=multipart/form-data method="post">
+    <div class="uploadtype">
+        <select>
+            <option>Select an option:</option>
+            <option value="chsong">Clone Hero Song</option>
+            <option value="osusong">Osu Song</option>
+            <option value="osuskin">Osu Skin</option>
+            <option value="osureplay">Osu Replay</option>
+        </select>
+    </div>
+    <div class="chsong select">
     <div class="form-group">
         <input id="name" autofocus class="form-control" name="name" placeholder="Song Name" type="text">
     </div>
     <div class="form-group">
         <input id="artist" autofocus class="form-control" name="artist" placeholder="Song Artist" type="text">
     </div>
+    </div>
+    <div class="osusong select">
     <div class="form-group">
-        <input id="creation" autofocus class="form-control" name="creation" type="date">
-    </div>    
+        <input id="name" autofocus class="form-control" name="name" placeholder="Song Name" type="text">
+    </div>
+    <div class="form-group">
+        <input id="artist" autofocus class="form-control" name="artist" placeholder="Song Artist" type="text">
+    </div>
+    </div>
+
+    <div class="osuskin select">
+    <div class="form-group">
+        <input id="name" autofocus class="form-control" name="name" placeholder="Skin Name" type="text">
+    </div>
+    </div>
+
+    <div class="osureplay select">
+    <div class="form-group">
+        <input id="name" autofocus class="form-control" name="name" placeholder="Map Name" type="text">
+    </div>
+    </div>
+
     <div class="form-group">
         <input id="uploadedfile" autofocus class="form-control" name="uploadedfile" type="file">
     </div>
