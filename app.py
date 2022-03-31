@@ -1,16 +1,16 @@
-from distutils.command.upload import upload
-import sqlite3
 import flask
 from flask import Flask, Response, render_template, request, session, redirect
 from flask_session import Session
 from tempfile import mkdtemp
 import sys
 import os
-from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
-from helpers import login_required, dict_factory, allowed_file
+from helpers import login_required, allowed_file
 from datetime import datetime
+import psycopg
+import psycopg_pool
+from psycopg.rows import dict_row
 
 
 app = Flask(__name__)
@@ -36,18 +36,23 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# configure database
-db = sqlite3.connect('rgsdb.db', check_same_thread=False)
-db.row_factory = dict_factory # converts row factory to a dictionary
-# create db if needed
-with open('schema.sql', 'r') as f:
-    query_list = f.read().split(";")
-    cursor = db.cursor()
-    for query in query_list:
-        cursor.execute(query)
-    cursor.close()
+# TODO: unhard code rgsdb schema and switch user to 'rgsdb'
+with psycopg.connect("postgres://phazonic@localhost") as conn:
+    # really bad hack that will be in place until I reorganize the pool (plan for docker)
+    with conn.cursor() as cur:
+        cur.execute("CREATE SCHEMA IF NOT EXISTS rgsdb")
+class DbPool(psycopg_pool.ConnectionPool):
+    def configure(self, conn: psycopg.Connection):
+        conn.execute("SET search_path = rgsdb") # hardcoded because lazy
+        conn.row_factory = dict_row
 
-print("DB configured")
+db = DbPool("postgres://phazonic@localhost")
+with db.connection() as conn:
+    with open('psql_schema.sql', 'r') as f:
+        t = f.read()
+        conn.execute(t)
+
+print("DB configured.")
 
 # webapp
 
@@ -68,7 +73,8 @@ def login() -> str:
             return flask.abort()
 
         # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE username = :username", {'username':request.form.get("username")}).fetchall()
+        with db.connection() as conn:
+            rows = conn.execute("SELECT * FROM users WHERE username = %s", (request.form.get("username"))).fetchall()
 
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(rows[0]['password'], request.form.get("password")):
@@ -94,7 +100,8 @@ def register() -> str:
         password_plaintext = request.form.get("password")
         password_hash = generate_password_hash(password_plaintext, "sha256")
         # check if username is taken
-        usr_exist = db.execute("SELECT username FROM users WHERE username = :username", {'username': username}).fetchone()
+        with db.connection() as conn:
+            db.execute("SELECT username FROM users WHERE username = %s", (username)).fetchone()
         if usr_exist:
             return render_template("register.html", error=True, message="Username has been taken, please choose something else!")
 
