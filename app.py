@@ -101,12 +101,13 @@ def register() -> str:
         password_hash = generate_password_hash(password_plaintext, "sha256")
         # check if username is taken
         with db.connection() as conn:
-            db.execute("SELECT username FROM users WHERE username = %s", (username)).fetchone()
+            usr_exist = conn.execute("SELECT username FROM users WHERE username = %s", (username)).fetchone()
+        
         if usr_exist:
             return render_template("register.html", error=True, message="Username has been taken, please choose something else!")
 
-        db.execute("INSERT INTO users (username, password) VALUES (:username, :password)", {'username':username, 'password':password_hash})
-        db.commit()
+        with db.connection() as conn:
+            conn.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s)", (username, password_hash))
         return redirect("/login")
 
     else:
@@ -120,7 +121,9 @@ def index() -> str:
     """Landing page"""
     python_version = sys.version
     flask_version = flask.__version__
-    user = db.execute("SELECT username FROM users WHERE id = :uid", {'uid':session['user_id']}).fetchone()['username']
+    #user = db.execute("SELECT username FROM users WHERE id = :uid", {'uid':session['user_id']}).fetchone()['username']
+    with db.connection() as conn:
+        user = conn.execute("SELECT username FROM users WHERE id = %s", (session['user_id'])).fetchone()['username']
     return render_template('index.html', python_version=python_version, flask_version=flask_version, user=user)
 
 
@@ -135,8 +138,10 @@ def logout() -> Response:
 @login_required
 def songs():
     """Clone Hero song list"""
-    song_dict = db.execute("SELECT * FROM ch_songs")
-    return render_template("songs.html", song_data=song_dict)
+    #song_dict = db.execute("SELECT * FROM ch_songs")
+    with db.connection() as conn:
+        song_list = conn.execute("SELECT * FROM songs").fetchall()
+    return render_template("songs.html", song_data=song_list)
 
 @app.route("/songs/add", methods=['POST', 'GET'])
 @login_required
