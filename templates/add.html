@@ -24,7 +24,7 @@ $(document).ready(function(){
 <h1>Add a song to the database</h1>
 <form action="/songs/add" enctype=multipart/form-data method="post">
     <div class="uploadtype">
-        <select>
+        <select id="datatype" name="datatype" class="form-control">
             <option>Select an option:</option>
             <option value="chsong">Clone Hero Song</option>
             <option value="osusong">Osu Song</option>

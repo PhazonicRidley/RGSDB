@@ -1,3 +1,4 @@
+from typing import Any, Optional
 import flask
 from flask import Flask, Response, render_template, request, session, redirect
 from flask_session import Session
@@ -42,9 +43,15 @@ with psycopg.connect("postgres://phazonic@localhost") as conn:
     with conn.cursor() as cur:
         cur.execute("CREATE SCHEMA IF NOT EXISTS rgsdb")
 class DbPool(psycopg_pool.ConnectionPool):
-    def configure(self, conn: psycopg.Connection):
-        conn.execute("SET search_path = rgsdb") # hardcoded because lazy
+   
+    def getconn(self, timeout: Optional[float] = None) -> psycopg.Connection[Any]:
+        conn = super().getconn(timeout)
+        # configure
+        conn.execute("SET search_path = rgsdb")
         conn.row_factory = dict_row
+        print("I am running")
+        return conn
+
 
 db = DbPool("postgres://phazonic@localhost")
 with db.connection() as conn:
@@ -74,10 +81,10 @@ def login() -> str:
 
         # Query database for username
         with db.connection() as conn:
-            rows = conn.execute("SELECT * FROM users WHERE username = %s", (request.form.get("username"))).fetchall()
+            rows = conn.execute("SELECT * FROM users WHERE username = %s", (request.form.get("username"),)).fetchall()
 
         # Ensure username exists and password is correct
-        if len(rows) != 1 or not check_password_hash(rows[0]['password'], request.form.get("password")):
+        if len(rows) != 1 or not check_password_hash(rows[0]['password_hash'], request.form.get("password")):
             return render_template("login.html", invalid_login=True)
 
         # Remember which user has logged in
@@ -101,7 +108,7 @@ def register() -> str:
         password_hash = generate_password_hash(password_plaintext, "sha256")
         # check if username is taken
         with db.connection() as conn:
-            usr_exist = conn.execute("SELECT username FROM users WHERE username = %s", (username)).fetchone()
+            usr_exist = conn.execute("SELECT username FROM users WHERE username = %s", (username, )).fetchone()
         
         if usr_exist:
             return render_template("register.html", error=True, message="Username has been taken, please choose something else!")
@@ -123,7 +130,7 @@ def index() -> str:
     flask_version = flask.__version__
     #user = db.execute("SELECT username FROM users WHERE id = :uid", {'uid':session['user_id']}).fetchone()['username']
     with db.connection() as conn:
-        user = conn.execute("SELECT username FROM users WHERE id = %s", (session['user_id'])).fetchone()['username']
+        user = conn.execute("SELECT username FROM users WHERE id = %s", (session['user_id'], )).fetchone()['username']
     return render_template('index.html', python_version=python_version, flask_version=flask_version, user=user)
 
 
@@ -140,7 +147,7 @@ def songs():
     """Clone Hero song list"""
     #song_dict = db.execute("SELECT * FROM ch_songs")
     with db.connection() as conn:
-        song_list = conn.execute("SELECT * FROM songs").fetchall()
+        song_list = conn.execute("SELECT * FROM data").fetchall()
     return render_template("songs.html", song_data=song_list)
 
 @app.route("/songs/add", methods=['POST', 'GET'])
@@ -150,7 +157,7 @@ def add_song():
     if request.method == 'POST':
         name = request.form.get("name")
         artist = request.form.get("artist")
-        creation = request.form.get("creation")
+        data_type = request.form.get("datatype")
         uploaded = str(datetime.now())
         file = request.files["uploadedfile"]
         # file nonsense here
@@ -158,12 +165,12 @@ def add_song():
             filename = secure_filename(artist + " - " + name)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename + ".zip"))
             print("File uploaded")
-            db.execute(
-                """
-                INSERT INTO ch_songs (user_id, song_name, artist, song_creation, uploaded)
-                VALUES (:uid, :name, :artist, :creation, :uploaded)
-                """, {'uid':session['user_id'],'name':name, 'artist':artist, 'creation':creation, 'uploaded':uploaded})
-            db.commit()
+            with db.connection() as conn:
+                conn.execute(
+                    """
+                    INSERT INTO data (user_id, song_name, artist, song_creation, uploaded, type)
+                    VALUES (%s, %s, %s, %s, %s)
+                    """, (session['user_id'], name, artist, uploaded, data_type,))
         return redirect("/songs")
     
     else:

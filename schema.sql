@@ -3,12 +3,11 @@
 
 CREATE SCHEMA IF NOT EXISTS rgsdb; -- not needed
 
-CREATE TABLE IF NOT EXISTS rgsdb.songs (
+CREATE TABLE IF NOT EXISTS rgsdb.data (
     id BIGINT PRIMARY KEY,
     user_id INT NOT NULL,
     name TEXT NOT NULL,
-    game TEXT NOT NULL,
-    artist TEXT NOT NULL,
+    artist TEXT,
     type TEXT NOT NULL,
     uploaded DATE NOT NULL DEFAULT CURRENT_DATE
 );
