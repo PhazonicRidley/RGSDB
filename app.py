@@ -48,7 +48,7 @@ class DbPool(psycopg_pool.ConnectionPool):
 
 db = DbPool("postgres://phazonic@localhost")
 with db.connection() as conn:
-    with open('psql_schema.sql', 'r') as f:
+    with open('schema.sql', 'r') as f:
         t = f.read()
         conn.execute(t)
 
