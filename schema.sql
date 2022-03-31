@@ -1,28 +1,20 @@
--- sqlite3
-BEGIN TRANSACTION;
+-- postgres 13 ;
+-- TODO: rename to schema.sql;
 
--- Find a cleaner way to do this when porting this to postgres in the future
-CREATE TABLE IF NOT EXISTS `ch_songs` (
-    `song_id` integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-    `user_id` integer not null,
-    `song_name` text NOT NULL,
-    `artist` text default "Unknown",
-    `song_creation` text NOT NULL, -- datetime
-    `uploaded` text NOT NULL -- datetime add current time from python
+CREATE SCHEMA IF NOT EXISTS rgsdb; -- not needed
+
+CREATE TABLE IF NOT EXISTS rgsdb.songs (
+    id BIGINT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name TEXT NOT NULL,
+    game TEXT NOT NULL,
+    artist TEXT NOT NULL,
+    type TEXT NOT NULL,
+    uploaded DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
-CREATE TABLE IF NOT EXISTS `osu_songs` (
-    `song_id` integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-    `user_id` integer not null,
-    `song_name` text NOT NULL,
-    `artist` text default "Unknown",
-    `song_creation` text NOT NULL, -- datetime
-    `uploaded` text NOT NULL -- datetime add current time from python
+CREATE TABLE IF NOT EXISTS rgsdb.users (
+    id SERIAL NOT NULL PRIMARY KEY,
+    username TEXT NOT NULL,
+    password_hash VARCHAR(255) NOT NULL
 );
-
-CREATE TABLE IF NOT EXISTS `users` (
-    `id` integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-    `username` text default NULL,
-    `password` varchar(255) NOT NULL
-);
-END TRANSACTION;
