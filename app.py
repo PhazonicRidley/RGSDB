@@ -15,9 +15,17 @@ from psycopg.rows import dict_row
 
 
 app = Flask(__name__)
+
+# Song shit TODO: RENAME TO REPO
+
 if not os.path.isdir("songs/"):
         os.mkdir("songs/")
 UPLOAD_FOLDER = "songs/"
+
+@app.route('/files/<filename>')
+def files(filename):
+    return send_from_directory(app.root_path + '/songs/', filename)
+
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -38,7 +46,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # TODO: unhard code rgsdb schema and switch user to 'rgsdb'
-with psycopg.connect("postgres://phazonic@localhost") as conn:
+with psycopg.connect("postgres://postgres@localhost") as conn:
     # really bad hack that will be in place until I reorganize the pool (plan for docker)
     with conn.cursor() as cur:
         cur.execute("CREATE SCHEMA IF NOT EXISTS rgsdb")
@@ -53,7 +61,7 @@ class DbPool(psycopg_pool.ConnectionPool):
         return conn
 
 
-db = DbPool("postgres://phazonic@localhost")
+db = DbPool("postgres://postgres@localhost")
 with db.connection() as conn:
     with open('schema.sql', 'r') as f:
         t = f.read()
@@ -155,6 +163,8 @@ def songs():
 def add_song():
     """Add a song"""
     if request.method == 'POST':
+        id = int(datetime.now().timestamp()*1e3 - datetime(2020,12,19).timestamp()*1e3)
+        id = str(id)
         name = request.form.get("name")
         artist = request.form.get("artist")
         data_type = request.form.get("datatype")
@@ -162,15 +172,15 @@ def add_song():
         file = request.files["uploadedfile"]
         # file nonsense here
         if file and allowed_file(file.filename):
-            filename = secure_filename(artist + " - " + name)
+            filename = secure_filename(id + " - " + artist + " - " + name)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename + ".zip"))
             print("File uploaded")
             with db.connection() as conn:
                 conn.execute(
                     """
-                    INSERT INTO data (user_id, song_name, artist, song_creation, uploaded, type)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """, (session['user_id'], name, artist, uploaded, data_type,))
+                    INSERT INTO data (id, user_id, name, artist, uploaded, type)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (id, session['user_id'], name, artist, uploaded, data_type,))
         return redirect("/songs")
     
     else:

@@ -6,24 +6,36 @@
 
 {% block main %}
 {% if song_data %}
+<style>
+    .table {
+        border: 1px solid;
+    }
+    tr.data:hover {
+        background-color: #4b443b;
+    }
+</style>
     <table class="table">
         <thead>
             <tr>
                 <th scope="col">ID</th>
                 <th scope="col">Name</th>
                 <th scope="col">Artist</th>
-                <th scope="col">Creation Date</th>
                 <th scope="col">Upload Date</th>
+                <th scope="col">Uploader</th>
+                <th scope="col">Download</th>
             </tr>
         </thead>
         <tbody>
             {% for song in song_data %}
-            <tr>
-                <td scope="row">{{ song['song_id'] }}</td>
-                <td>{{ song['song_name'] }}</td>
+            <tr class="data">
+                <td scope="row">{{ song['id'] }}</td>
+                <td>{{ song['name'] }}</td>
                 <td>{{ song['artist'] }}</td>
-                <td>{{ song['song_creation'] }}</td>
                 <td>{{ song['uploaded'] }}</td>
+                <td>{{ song['user_id'] }}</td> <!--
+                <td><a href="{{ url_for('files', filename=sid + '_-_' + song['artist'] + '_-_' + song['name'] + '.zip')}}"><img src="{{ url_for('static', filename='img/download.gif') }}" height="50px"></a></img></td>
+                -->
+                <td><a href=""><img src="{{ url_for('static', filename='img/download.gif') }}" height="50px"></a></img></td>
             </tr>
             {% endfor %}
         </tbody>
