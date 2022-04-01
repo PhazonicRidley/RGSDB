@@ -3,3 +3,4 @@ Flask-Session
 requests
 psycopg
 psycopg_c
+psycopg_pool
