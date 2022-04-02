@@ -1,6 +1,6 @@
 from typing import Any, Optional
 import flask
-from flask import Flask, Response, render_template, request, session, redirect
+from flask import Flask, Response, render_template, request, session, redirect, send_from_directory
 from flask_session import Session
 from tempfile import mkdtemp
 import sys
@@ -150,12 +150,12 @@ def logout() -> Response:
     return redirect("/")
 
 @app.route("/songs")
-@login_required
+#@login_required
 def songs():
     """Clone Hero song list"""
     #song_dict = db.execute("SELECT * FROM ch_songs")
     with db.connection() as conn:
-        song_list = conn.execute("SELECT * FROM data").fetchall()
+        song_list = conn.execute("SELECT *,id::varchar FROM data").fetchall()
     return render_template("songs.html", song_data=song_list)
 
 @app.route("/songs/add", methods=['POST', 'GET'])
@@ -173,6 +173,7 @@ def add_song():
         # file nonsense here
         if file and allowed_file(file.filename):
             filename = secure_filename(id + " - " + artist + " - " + name)
+            filename = filename.replace("_", " ")
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename + ".zip"))
             print("File uploaded")
             with db.connection() as conn:
