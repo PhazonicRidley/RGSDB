@@ -11,13 +11,13 @@ function verifyPasswords(){
     if (pass.value !== confirmPass.value)
     {
         confirmPass.style.border = "1px solid red";
-        document.getElementById("errmsg").innerHTML = `Passwords do not match`;
+        document.getElementById("err").innerHTML = `\nPasswords do not match`;
         passwordConfirmation = false;
     }
     else
     {
         confirmPass.style.border = "1px solid #ced4da"
-        document.getElementById("errmsg").innerHTML = "";
+        document.getElementById("err").innerHTML = "";
         passwordConfirmation = true;
     }
 }

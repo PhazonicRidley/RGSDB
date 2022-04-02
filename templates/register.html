@@ -16,11 +16,12 @@
         </div>
         <div id="confirm_div" class="form-group">
             <input id="password_confirm" class="form-control" name="password_confirm" placeholder="Confirm Passsword" type="password">
-            <small id="errmsg" class="form-text"></small>
+            <br>
+            <small id="err" class="errmsg" class="form-text"></small>
         </div>
         {% if error %}
         <script>
-            document.getElementById("errmsg").innerHTML = `{{ message }}`;
+            document.getElementById("err").innerHTML = `{{ message }}`;
         </script>
         {% endif %}
         <button id="submit" class="btn btn-primary" type="submit">Register</button>

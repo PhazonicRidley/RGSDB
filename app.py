@@ -18,13 +18,13 @@ app = Flask(__name__)
 
 # Song shit TODO: RENAME TO REPO
 
-if not os.path.isdir("songs/"):
-        os.mkdir("songs/")
-UPLOAD_FOLDER = "songs/"
+if not os.path.isdir("repository/"):
+        os.mkdir("repository/")
+UPLOAD_FOLDER = "repository/"
 
 @app.route('/files/<filename>')
 def files(filename):
-    return send_from_directory(app.root_path + '/songs/', filename)
+    return send_from_directory(app.root_path + '/repository/', filename)
 
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -57,7 +57,6 @@ class DbPool(psycopg_pool.ConnectionPool):
         # configure
         conn.execute("SET search_path = rgsdb")
         conn.row_factory = dict_row
-        print("I am running")
         return conn
 
 
@@ -149,40 +148,43 @@ def logout() -> Response:
     session.clear()
     return redirect("/")
 
-@app.route("/songs")
-#@login_required
-def songs():
-    """Clone Hero song list"""
-    #song_dict = db.execute("SELECT * FROM ch_songs")
-    with db.connection() as conn:
-        song_list = conn.execute("SELECT *,id::varchar FROM data").fetchall()
-    return render_template("songs.html", song_data=song_list)
-
-@app.route("/songs/add", methods=['POST', 'GET'])
+@app.route("/repository")
 @login_required
-def add_song():
+def repository():
+    """Clone Hero song list"""
+    with db.connection() as conn:
+        data = conn.execute("SELECT *, id::varchar FROM data").fetchall()
+        for i in range(len(data)):
+            name = conn.execute("SELECT username FROM users WHERE id = %s", (data[i]['user_id'],)).fetchone()
+            if name:
+                data[i]['username'] = name['username']
+
+    return render_template("list.html", data_dict=data)
+
+@app.route("/repository/add", methods=['POST', 'GET'])
+@login_required
+def add_data():
     """Add a song"""
     if request.method == 'POST':
-        id = int(datetime.now().timestamp()*1e3 - datetime(2020,12,19).timestamp()*1e3)
-        id = str(id)
+        id = str(int(datetime.now().timestamp()*1e3 - datetime(2020,12,19).timestamp()*1e3))
         name = request.form.get("name")
         artist = request.form.get("artist")
         data_type = request.form.get("datatype")
-        uploaded = str(datetime.now())
         file = request.files["uploadedfile"]
-        # file nonsense here
-        if file and allowed_file(file.filename):
+        if not (name and data_type and file):
+            return render_template('add.html', error=True)
+        if file: # and allowed_file(file.filename) 
             filename = secure_filename(id + " - " + artist + " - " + name)
             filename = filename.replace("_", " ")
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename + ".zip"))
-            print("File uploaded")
             with db.connection() as conn:
                 conn.execute(
                     """
-                    INSERT INTO data (id, user_id, name, artist, uploaded, type)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                    """, (id, session['user_id'], name, artist, uploaded, data_type,))
-        return redirect("/songs")
+                    INSERT INTO data (id, user_id, name, artist, type)
+                    VALUES (%s, %s, %s, %s, %s)
+                    """, (id, session['user_id'], name, artist, data_type,))
+
+        return redirect("/repository")
     
     else:
         return render_template("add.html")

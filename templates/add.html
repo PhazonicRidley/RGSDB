@@ -5,24 +5,9 @@
 
 {% block main %}
 
-<script>
-$(document).ready(function(){
-    $("select").change(function(){
-        $(this).find("option:selected").each(function(){
-            var optionValue = $(this).attr("value");
-            if(optionValue){
-                $(".select").not("." + optionValue).hide();
-                $("." + optionValue).show();
-            } else{
-                $(".select").hide();
-            }
-        });
-    }).change();
-});
-</script>
-
+<script src="/static/js/selector.js"></script>
 <h1>Add a song to the database</h1>
-<form action="/songs/add" enctype=multipart/form-data method="post">
+<form action="/repository/add" enctype=multipart/form-data method="post">
     <div class="uploadtype">
         <select id="datatype" name="datatype" class="form-control">
             <option>Select an option:</option>
@@ -33,7 +18,6 @@ $(document).ready(function(){
         </select>
     </div>
     <br>
-    
     <div class="chsong select">
         <div class="form-group">
             <input id="name" autofocus class="form-control" name="name" placeholder="Song Name" type="text">
@@ -64,10 +48,14 @@ $(document).ready(function(){
         </div>
     </div>
 
-    <div class="form-group">
+    <div hidden id="fileuploadblock" class="form-group">
         <input id="uploadedfile" autofocus class="form-control" name="uploadedfile" type="file">
     </div>
     <br>
     <button id="submit" class="btn btn-primary" type="submit">Add</button>
+    {% if error %}
+        <br>
+        <small class="errmsg">Please fill in all the boxes.</small>
+    {% endif %}
 </form>
 {% endblock %}
