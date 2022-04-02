@@ -1,0 +1,63 @@
+{% extends "layout.html" %}
+{% block title %}
+    Delete Data
+{% endblock %}
+
+{% block main %}
+{% if deletion_msg %}
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+    {{ deletion_msg }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+{% if user_data %}
+<script>
+    function toggleBtn()
+    {
+        var boxes = Array.from(document.querySelectorAll("input"));
+        var btn = document.querySelector("#submit");
+        if (boxes.every((element) => !element.checked))
+        {
+            btn.disabled = true;
+        }
+        else
+        {
+            btn.disabled = false;
+        }
+    }
+</script>
+<form id='ids' name="ids" action="/repository/delete" enctype=multipart/form-data method="post">
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Name</th>
+                <th scope="col">Kind</th>
+                <th scope="col">Artist</th>
+                <th scope="col">Upload Date</th>
+                <th scope="col">Delete</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+                {% for data in user_data %}
+                <tr class="data">
+                    <td scope="row">{{ data['id'] }}</td>
+                    <td>{{ data['name'] }}</td>
+                    <td>{{ data['type'] }}</td>
+                    <td>{{ data['artist'] }}</td>
+                    <td>{{ data['uploaded'] }}</td>
+                    <td>
+                        <input type="checkbox" name="{{ data['id']}}" onclick="toggleBtn()">
+                    </td>
+                </tr>
+                {% endfor %}
+        </tbody>
+    </table>
+    <br>
+    <button disabled id="submit" class="btn btn-danger" type="submit" onclick="confirm('Are you sure you want to delete')">Delete</button>
+</form>
+{% else %}
+<h4>No data saved!</h4>
+{% endif %}
+{% endblock %}

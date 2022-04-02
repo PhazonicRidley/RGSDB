@@ -1,22 +1,22 @@
-from typing import Any, Optional
-import flask
-from flask import Flask, Response, render_template, request, session, redirect, send_from_directory
-from flask_session import Session
-from tempfile import mkdtemp
-import sys
 import os
-from werkzeug.utils import secure_filename
-from werkzeug.security import check_password_hash, generate_password_hash
-from helpers import login_required, allowed_file
+import sys
 from datetime import datetime
+from tempfile import mkdtemp
+from typing import Any, Optional
+
+import flask
 import psycopg
 import psycopg_pool
+from flask import (Flask, Response, redirect, render_template, request,
+                   send_from_directory, session)
+from flask_session import Session
 from psycopg.rows import dict_row
+from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
 
+from helpers import allowed_file, login_required # allowed file will be used eventually
 
 app = Flask(__name__)
-
-# Song shit TODO: RENAME TO REPO
 
 if not os.path.isdir("repository/"):
         os.mkdir("repository/")
@@ -24,6 +24,7 @@ UPLOAD_FOLDER = "repository/"
 
 @app.route('/files/<filename>')
 def files(filename):
+    """Route to handle downloading"""
     return send_from_directory(app.root_path + '/repository/', filename)
 
 # Ensure templates are auto-reloaded
@@ -45,7 +46,7 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# TODO: unhard code rgsdb schema and switch user to 'rgsdb'
+# TODO: unhardcode rgsdb schema and switch user to 'rgsdb'
 with psycopg.connect("postgres://postgres@localhost") as conn:
     # really bad hack that will be in place until I reorganize the pool (plan for docker)
     with conn.cursor() as cur:
@@ -63,8 +64,7 @@ class DbPool(psycopg_pool.ConnectionPool):
 db = DbPool("postgres://postgres@localhost")
 with db.connection() as conn:
     with open('schema.sql', 'r') as f:
-        t = f.read()
-        conn.execute(t)
+        conn.execute(f.read())
 
 print("DB configured.")
 
@@ -189,3 +189,22 @@ def add_data():
     else:
         return render_template("add.html")
 
+
+@app.route("/repository/delete", methods=['GET', 'POST'])
+@login_required
+def delete_data():
+    """Removes Data"""
+    if request.method == 'GET':
+        with db.connection() as conn:
+            user_added_data = conn.execute("SELECT * FROM data WHERE user_id = %s", (session['user_id'],)).fetchall()
+        if user_added_data is None:
+            return render_template("delete.html", error=True)
+            
+        return render_template('delete.html', user_data=user_added_data)
+    else: # POST
+        entry_ids = request.form.keys()
+        with db.connection() as conn:
+            for entry_id in entry_ids:
+                conn.execute("DELETE FROM data WHERE id = %s", (entry_id,))
+        
+        return render_template("delete.html", deletion_msg="Item deleted!")
