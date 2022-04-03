@@ -1,4 +1,4 @@
-// hides and shows selector
+// hides and shows selector options
 $(document).ready(function(){
     $("select").change(function(){
         $(this).find("option:selected").each(function(){
@@ -6,6 +6,7 @@ $(document).ready(function(){
             if(optionValue){
                 $(".select").not("." + optionValue).hide();
                 $("." + optionValue).show();
+                $("." + optionValue).prop('required', true);
             } else{
                 $(".select").hide();
             }

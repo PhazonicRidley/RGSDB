@@ -49,13 +49,13 @@
     </div>
 
     <div hidden id="fileuploadblock" class="form-group">
-        <input id="uploadedfile" autofocus class="form-control" name="uploadedfile" type="file">
+        <input required id="uploadedfile" autofocus class="form-control" name="uploadedfile" type="file">
     </div>
     <br>
-    <button id="submit" class="btn btn-primary" type="submit">Add</button>
+    <button id="submit" class="btn btn-primary" type="submit" >Add</button>
     {% if error %}
         <br>
-        <small class="errmsg">Please fill in all the boxes.</small>
+        <small class="errmsg">Missing data, please try again.</small>
     {% endif %}
 </form>
 {% endblock %}

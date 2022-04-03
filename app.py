@@ -73,7 +73,6 @@ print("DB configured.")
 @app.route("/login", methods=["GET", "POST"])
 def login() -> str:
     """Log user in"""
-
     # Forget any user_id
     session.clear()
     # User reached route via POST (as by submitting a form via POST)
@@ -135,7 +134,6 @@ def index() -> str:
     """Landing page"""
     python_version = sys.version
     flask_version = flask.__version__
-    #user = db.execute("SELECT username FROM users WHERE id = :uid", {'uid':session['user_id']}).fetchone()['username']
     with db.connection() as conn:
         user = conn.execute("SELECT username FROM users WHERE id = %s", (session['user_id'], )).fetchone()['username']
     return render_template('index.html', python_version=python_version, flask_version=flask_version, user=user)
@@ -171,8 +169,10 @@ def add_data() -> Union[str, Response]:
         name = request.form.get(f"{data_type}-name")
         artist = request.form.get(f"{data_type}-artist")
         file = request.files["uploadedfile"]
+        if artist:
+            artist = artist.strip()
         # TODO: handle this check in the frontend with javascript
-        if (name and data_type and file) and file and allowed_file(file.filename):
+        if name and file and allowed_file(file.filename):
             filename = secure_filename(id + "-" + artist + "-" + name)
             filename = filename.replace("_", " ")
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename + ".zip"))
@@ -181,7 +181,7 @@ def add_data() -> Union[str, Response]:
                     """
                     INSERT INTO data (id, user_id, name, artist, type)
                     VALUES (%s, %s, %s, %s, %s)
-                    """, (id, session['user_id'], name.strip(), artist.strip(), data_type,))
+                    """, (id, session['user_id'], name.strip(), artist, data_type,))
         else:
             return render_template('add.html', error=True) 
         return redirect("/repository")
