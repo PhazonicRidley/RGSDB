@@ -27,7 +27,7 @@
             <td>{{ data['artist'] if data['artist'] else 'No Data' }}</td>
             <td>{{ data['uploaded'] }}</td>
             <td>{{ data['username'] }}</td>
-            <td><a href="{{ url_for('files', filename=data['id'] + ' - ' + data['artist'] + ' - ' + data['name'] +'.zip')}}"><img src="{{ url_for('static', filename='img/download.gif') }}" height="50px"></a></img></td>
+            <td><a href="{{ url_for('files', filename=data['id'] + '-' + data['artist'] + '-' + data['name'] +'.zip')}}"><img src="{{ url_for('static', filename='img/download.gif') }}" height="50px"></a></img></td>
         </tr>
         {% endfor %}
     </tbody>

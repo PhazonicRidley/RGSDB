@@ -2,7 +2,7 @@ import os
 import sys
 from datetime import datetime
 from tempfile import mkdtemp
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import flask
 import psycopg
@@ -163,18 +163,17 @@ def repository():
 
 @app.route("/repository/add", methods=['POST', 'GET'])
 @login_required
-def add_data():
-    """Add a song"""
+def add_data() -> Union[str, Response]:
+    """Add data"""
     if request.method == 'POST':
         id = str(int(datetime.now().timestamp()*1e3 - datetime(2020,12,19).timestamp()*1e3))
-        name = request.form.get("name")
-        artist = request.form.get("artist")
         data_type = request.form.get("datatype")
+        name = request.form.get(f"{data_type}-name")
+        artist = request.form.get(f"{data_type}-artist")
         file = request.files["uploadedfile"]
-        if not (name and data_type and file):
-            return render_template('add.html', error=True)
-        if file: # and allowed_file(file.filename) 
-            filename = secure_filename(id + " - " + artist + " - " + name)
+        # TODO: handle this check in the frontend with javascript
+        if (name and data_type and file) and file and allowed_file(file.filename):
+            filename = secure_filename(id + "-" + artist + "-" + name)
             filename = filename.replace("_", " ")
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename + ".zip"))
             with db.connection() as conn:
@@ -182,8 +181,9 @@ def add_data():
                     """
                     INSERT INTO data (id, user_id, name, artist, type)
                     VALUES (%s, %s, %s, %s, %s)
-                    """, (id, session['user_id'], name, artist, data_type,))
-
+                    """, (id, session['user_id'], name.strip(), artist.strip(), data_type,))
+        else:
+            return render_template('add.html', error=True) 
         return redirect("/repository")
     
     else:
