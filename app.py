@@ -5,6 +5,7 @@ from tempfile import mkdtemp
 from typing import Any, Optional, Union
 
 import flask
+from dotenv import load_dotenv
 import psycopg
 import psycopg_pool
 from flask import (Flask, Response, redirect, render_template, request,
@@ -21,6 +22,7 @@ app = Flask(__name__)
 if not os.path.isdir("repository/"):
         os.mkdir("repository/")
 UPLOAD_FOLDER = "repository/"
+load_dotenv()
 
 @app.route('/files/<filename>')
 def files(filename):
@@ -47,7 +49,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # TODO: unhardcode rgsdb schema and switch user to 'rgsdb'
-with psycopg.connect("postgres://postgres@localhost") as conn:
+with psycopg.connect(os.environ.get("POSTGRES")) as conn:
     # really bad hack that will be in place until I reorganize the pool (plan for docker)
     with conn.cursor() as cur:
         cur.execute("CREATE SCHEMA IF NOT EXISTS rgsdb")
@@ -151,13 +153,16 @@ def logout() -> Response:
 def repository():
     """Clone Hero song list"""
     with db.connection() as conn:
-        data = conn.execute("SELECT *, id::varchar FROM data").fetchall()
-        for i in range(len(data)):
+        clonehero = conn.execute("SELECT *, id::varchar FROM chsong").fetchall()
+        osusongs = conn.execute("SELECT *, id::varchar FROM osusong").fetchall()
+        osuskin = conn.execute("SELECT *, id::varchar FROM osuskin").fetchall()
+        osureplay = conn.execute("SELECT *, id::varchar FROM osureplay").fetchall()
+        for i in range(len(clonehero)):
             name = conn.execute("SELECT username FROM users WHERE id = %s", (data[i]['user_id'],)).fetchone()
             if name:
-                data[i]['username'] = name['username']
+                clonehero[i]['username'] = name['username']
 
-    return render_template("list.html", data_dict=data)
+    return render_template("list.html", data_dict=clonehero)
 
 @app.route("/repository/add", methods=['POST', 'GET'])
 @login_required
@@ -168,20 +173,48 @@ def add_data() -> Union[str, Response]:
         data_type = request.form.get("datatype")
         name = request.form.get(f"{data_type}-name")
         artist = request.form.get(f"{data_type}-artist")
+        skin_name = request.form.get(f"osuskin-name")
+        player_name = request.form.get(f"osureplay-player")
         file = request.files["uploadedfile"]
-        if artist:
-            artist = artist.strip()
+        filename = request.files['uploadedfile'].filename
+        fileext = filename[-3:]
         # TODO: handle this check in the frontend with javascript
+        # sorry to anyone reading this code, I write bash scripts and this is just how my stuff works
         if name and file and allowed_file(file.filename):
-            filename = secure_filename(id + "-" + artist + "-" + name)
+            if data_type == "chsong" or data_type == "osusong":
+                filename = secure_filename(id + " - " + artist + " - " + name)
+            elif data_type == "osuskin":
+                filename = secure_filename(id + " - " + skin_name)
+            elif data_type == "osureplay":
+                filename = secure_filename(id + " - " + player_name + " - " + name)
             filename = filename.replace("_", " ")
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename + ".zip"))
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename + "." + fileext))
             with db.connection() as conn:
-                conn.execute(
+                if data_type == "chsong":
+                    conn.execute(
                     """
-                    INSERT INTO data (id, user_id, name, artist, type)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """, (id, session['user_id'], name.strip(), artist, data_type,))
+                    INSERT INTO chsong (id, user_id, name, artist)
+                    VALUES (%s, %s, %s, %s)
+                    """, (id, session['user_id'], name.strip(), artist,))
+                elif data_type == "osusong":
+                    conn.execute(
+                    """
+                    INSERT INTO osusong (id, user_id, name, artist, type)
+                    VALUES (%s, %s, %s, %s)
+                    """, (id, session['user_id'], name.strip(), artist,))
+                elif data_type == "osuskin":
+                    conn.execute(
+                    """
+                    INSERT INTO osuskin (id, user_id, skin_name)
+                    VALUES (%s, %s, %s)
+                    """, (id, session['user_id'], skin_name,))
+                elif data_type == "osureplay":
+                    conn.execute(
+                    """
+                    INSERT INTO osureplay (id, user_id, player, name)
+                    VALUES (%s, %s, %s, %s)
+                    """, (id, session['user_id'], player_name.strip(), name.strip(),))
+
         else:
             return render_template('add.html', error=True) 
         return redirect("/repository")

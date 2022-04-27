@@ -4,3 +4,4 @@ requests
 psycopg
 psycopg_c
 psycopg_pool
+python-dotenv

@@ -44,12 +44,15 @@
 
     <div class="osureplay select">
         <div class="form-group">
+            <input id="osureplay-player" autofocus class="form-control" name="osureplay-player" placeholder="Player" type="text">
+        </div>
+        <div class="form-group">
             <input id="osureplay-name" autofocus class="form-control" name="osureplay-name" placeholder="Map Name" type="text">
         </div>
     </div>
 
     <div hidden id="fileuploadblock" class="form-group">
-        <input required id="uploadedfile" autofocus class="form-control" name="uploadedfile" type="file">
+        <input required id="uploadedfile" autofocus class="form-control" name="uploadedfile" type="file" accept=".zip,.osz,.osr,.osk">
     </div>
     <br>
     <button id="submit" class="btn btn-primary" type="submit" >Add</button>

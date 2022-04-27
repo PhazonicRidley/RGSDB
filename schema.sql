@@ -3,12 +3,36 @@
 
 CREATE SCHEMA IF NOT EXISTS rgsdb; -- not needed
 
-CREATE TABLE IF NOT EXISTS rgsdb.data (
+-- OH GOD WHY
+
+CREATE TABLE IF NOT EXISTS rgsdb.chsong (
     id BIGINT PRIMARY KEY,
     user_id INT NOT NULL,
     name TEXT NOT NULL,
     artist TEXT,
-    type TEXT NOT NULL,
+    uploaded DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+CREATE TABLE IF NOT EXISTS rgsdb.osusong (
+    id BIGINT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name TEXT NOT NULL,
+    artist TEXT,
+    uploaded DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+CREATE TABLE IF NOT EXISTS rgsdb.osuskin (
+    id BIGINT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name TEXT NOT NULL,
+    uploaded DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+CREATE TABLE IF NOT EXISTS rgsdb.osureplay (
+    id BIGINT PRIMARY KEY,
+    user_id INT NOT NULL,
+    player TEXT NOT NULL,
+    name TEXT NOT NULL,
     uploaded DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
