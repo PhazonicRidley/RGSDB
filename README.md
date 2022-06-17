@@ -7,6 +7,6 @@ A tracker for different game songs
 
 ## Set up
 
+- Make sure `postgresql` is installed
 - Install dependencies with `pip install -r requirements.txt`
-- Set up the database `sqlite3 rgsdb.db -init schema.sql`
 - Start flask `flask run`

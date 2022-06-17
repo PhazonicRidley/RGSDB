@@ -63,7 +63,7 @@ class DbPool(psycopg_pool.ConnectionPool):
         return conn
 
 
-db = DbPool("postgres://postgres@localhost")
+db = DbPool(os.environ.get("POSTGRES"))
 with db.connection() as conn:
     with open('schema.sql', 'r') as f:
         conn.execute(f.read())
