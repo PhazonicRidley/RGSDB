@@ -15,23 +15,26 @@ from psycopg.rows import dict_row
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
-from helpers import allowed_file, login_required # allowed file will be used eventually
+from helpers import allowed_file, login_required  # allowed file will be used eventually
 
 app = Flask(__name__)
 
 if not os.path.isdir("repository/"):
-        os.mkdir("repository/")
+    os.mkdir("repository/")
 UPLOAD_FOLDER = "repository/"
 load_dotenv()
+
 
 @app.route('/files/<filename>')
 def files(filename):
     """Route to handle downloading"""
     return send_from_directory(app.root_path + '/repository/', filename)
 
+
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 
 # Ensure responses aren't cached
 @app.after_request
@@ -53,8 +56,10 @@ with psycopg.connect(os.environ.get("POSTGRES")) as conn:
     # really bad hack that will be in place until I reorganize the pool (plan for docker)
     with conn.cursor() as cur:
         cur.execute("CREATE SCHEMA IF NOT EXISTS rgsdb")
+
+
 class DbPool(psycopg_pool.ConnectionPool):
-   
+
     def getconn(self, timeout: Optional[float] = None) -> psycopg.Connection[Any]:
         conn = super().getconn(timeout)
         # configure
@@ -69,6 +74,7 @@ with db.connection() as conn:
         conn.execute(f.read())
 
 print("DB configured.")
+
 
 # webapp
 
@@ -116,10 +122,11 @@ def register() -> str:
         password_hash = generate_password_hash(password_plaintext, "sha256")
         # check if username is taken
         with db.connection() as conn:
-            usr_exist = conn.execute("SELECT username FROM users WHERE username = %s", (username, )).fetchone()
-        
+            usr_exist = conn.execute("SELECT username FROM users WHERE username = %s", (username,)).fetchone()
+
         if usr_exist:
-            return render_template("register.html", error=True, message="Username has been taken, please choose something else!")
+            return render_template("register.html", error=True,
+                                   message="Username has been taken, please choose something else!")
 
         with db.connection() as conn:
             conn.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s)", (username, password_hash))
@@ -129,7 +136,6 @@ def register() -> str:
         return render_template("register.html")
 
 
-
 @app.route("/")
 @login_required
 def index() -> str:
@@ -137,7 +143,7 @@ def index() -> str:
     python_version = sys.version
     flask_version = flask.__version__
     with db.connection() as conn:
-        user = conn.execute("SELECT username FROM users WHERE id = %s", (session['user_id'], )).fetchone()['username']
+        user = conn.execute("SELECT username FROM users WHERE id = %s", (session['user_id'],)).fetchone()['username']
     return render_template('index.html', python_version=python_version, flask_version=flask_version, user=user)
 
 
@@ -147,6 +153,7 @@ def logout() -> Response:
     """Handles logging out"""
     session.clear()
     return redirect("/")
+
 
 @app.route("/repository")
 @login_required
@@ -164,12 +171,13 @@ def repository():
 
     return render_template("list.html", data_dict=clonehero)
 
+
 @app.route("/repository/add", methods=['POST', 'GET'])
 @login_required
 def add_data() -> Union[str, Response]:
     """Add data"""
     if request.method == 'POST':
-        id = str(int(datetime.now().timestamp()*1e3 - datetime(2020,12,19).timestamp()*1e3))
+        id = str(int(datetime.now().timestamp() * 1e3 - datetime(2020, 12, 19).timestamp() * 1e3))
         data_type = request.form.get("datatype")
         name = request.form.get(f"{data_type}-name")
         artist = request.form.get(f"{data_type}-artist")
@@ -192,33 +200,33 @@ def add_data() -> Union[str, Response]:
             with db.connection() as conn:
                 if data_type == "chsong":
                     conn.execute(
-                    """
+                        """
                     INSERT INTO chsong (id, user_id, name, artist)
                     VALUES (%s, %s, %s, %s)
                     """, (id, session['user_id'], name.strip(), artist,))
                 elif data_type == "osusong":
                     conn.execute(
-                    """
+                        """
                     INSERT INTO osusong (id, user_id, name, artist, type)
                     VALUES (%s, %s, %s, %s)
                     """, (id, session['user_id'], name.strip(), artist,))
                 elif data_type == "osuskin":
                     conn.execute(
-                    """
+                        """
                     INSERT INTO osuskin (id, user_id, skin_name)
                     VALUES (%s, %s, %s)
                     """, (id, session['user_id'], skin_name,))
                 elif data_type == "osureplay":
                     conn.execute(
-                    """
+                        """
                     INSERT INTO osureplay (id, user_id, player, name)
                     VALUES (%s, %s, %s, %s)
                     """, (id, session['user_id'], player_name.strip(), name.strip(),))
 
         else:
-            return render_template('add.html', error=True) 
+            return render_template('add.html', error=True)
         return redirect("/repository")
-    
+
     else:
         return render_template("add.html")
 
@@ -232,12 +240,12 @@ def delete_data():
             user_added_data = conn.execute("SELECT * FROM data WHERE user_id = %s", (session['user_id'],)).fetchall()
         if user_added_data is None:
             return render_template("delete.html", error=True)
-            
+
         return render_template('delete.html', user_data=user_added_data)
-    else: # POST
+    else:  # POST
         entry_ids = request.form.keys()
         with db.connection() as conn:
             for entry_id in entry_ids:
                 conn.execute("DELETE FROM data WHERE id = %s", (entry_id,))
-        
+
         return render_template("delete.html", deletion_msg="Item deleted!")

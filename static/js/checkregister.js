@@ -25,14 +25,7 @@ confirmPass.onkeyup = verifyPasswords;
 function checkValue()
 {
     let btn = document.querySelector("#submit");
-    if ((uname.value != "" || hasWhiteSpace(uname.value)) && (pass.value != "" || hasWhiteSpace(pass.value)) && passwordConfirmation)
-    {
-        btn.disabled = false;
-    }
-    else
-    {
-        btn.disabled = true;
-    }
+    btn.disabled = !((uname.value !== "" || hasWhiteSpace(uname.value)) && (pass.value !== "" || hasWhiteSpace(pass.value)) && passwordConfirmation);
 }
 
 function hasWhiteSpace(s) {

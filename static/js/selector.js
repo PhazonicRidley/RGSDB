@@ -17,17 +17,10 @@ $(document).ready(function(){
 // hides file upload
 $(document).ready(function() {
     $('select').change(function() {
-        var selector = document.getElementById("datatype")
+        let selector = document.getElementById("datatype")
         console.log(selector.value)
         console.log(selector.options[0].value)
         console.log(selector.value === selector.options[0].value)
-        if (selector.options[0].value === selector.value)
-        {
-            document.getElementById("fileuploadblock").hidden = true;
-        }
-        else
-        {
-            document.getElementById("fileuploadblock").hidden = false;
-    }
+        document.getElementById("fileuploadblock").hidden = selector.options[0].value === selector.value;
     });
 })
