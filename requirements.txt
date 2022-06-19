@@ -1,7 +1,8 @@
-Flask
+Flask~=2.1.1
 Flask-Session
 requests
-psycopg
+psycopg~=3.0.11
 psycopg_c
 psycopg_pool
-python-dotenv
+python-dotenv~=0.20.0
+Werkzeug~=2.1.1
